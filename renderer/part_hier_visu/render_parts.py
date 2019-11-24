@@ -51,6 +51,7 @@ def export_obj(out, v, f, color):
 def render_mesh(v, f, color=[0.216, 0.494, 0.722]):
     tmp_dir = 'tmp'
     if not os.path.exists(tmp_dir):
+        print("mkdir tmp")
         os.mkdir(tmp_dir)
     
     tmp_obj = os.path.join(tmp_dir, str(time.time()).replace('.', '_')+'_'+str(random.random()).replace('.', '_')+'.obj')
@@ -60,8 +61,9 @@ def render_mesh(v, f, color=[0.216, 0.494, 0.722]):
 
     cmd = 'bash renderer/render.sh renderer/model.blend %s %s' % (tmp_obj, tmp_png)
     call(cmd, shell=True)
-
-    img = misc.imread(tmp_png)
+    tmp_png = tmp_png.replace(".png","")
+    print(tmp_png)
+    img = misc.imread(tmp_png+"34"+".png")
     img = img[1:401, 350: 750, :]
     img = img.astype(np.float32)
 
@@ -88,6 +90,7 @@ def render_mesh(v, f, color=[0.216, 0.494, 0.722]):
 
 cur_shape_dir = in_dir
 cur_part_dir = os.path.join(cur_shape_dir, 'objs')
+print(os.listdir(cur_part_dir))
 leaf_part_ids = [item.split('.')[0] for item in os.listdir(cur_part_dir) if item.endswith('.obj')]
 
 cur_render_dir = os.path.join(cur_shape_dir, 'parts_render')
@@ -110,7 +113,9 @@ center = np.mean(root_v, axis=0)
 root_v -= center
 scale = np.sqrt(np.max(np.sum(root_v**2, axis=1))) * 1.5
 root_v /= scale
-
+print(root_v)
+print("  ")
+print(root_f)
 root_render = render_mesh(root_v, root_f)
 
 cur_result_json = os.path.join(cur_shape_dir, 'result.json')
@@ -138,15 +143,42 @@ def render(data):
 
     part_v = np.vstack(cur_v_list)
     part_f = np.vstack(cur_f_list)
-
-    part_render = render_mesh(part_v, part_f, color=[0.93, 0.0, 0.0])
+    #print(part_v)
+    #for i in range(10):
+    #    print(i)
+    #i = i + 1
+    color = []
+    if data['id'] == 0:
+        color=[0.3, 0.3 , 0.3]
+    if data['id'] == 1:
+        color=[0.2, 0.4 , 0.3]
+    if data['id'] == 2:
+        color=[0.1, 0.5 , 0.3]
+    if data['id'] == 3:
+        color=[0.0, 0.6 , 0.3]
+    if data['id'] == 4:
+        color=[0.3, 0.4 , 0.2]
+    if data['id'] == 5:
+        color=[0.3, 0.5 , 0.6]
+    if data['id'] == 6:
+        color=[0.2, 0.6 , 0.7]
+    if data['id'] == 7:
+        color=[0.3, 0.7 , 0.5]
+    if data['id'] == 8:
+        color=[0.6, 0.9 , 0.0]
+    #part_render = render_mesh(part_v, part_f, color=[0.0, 0.93, 0.0])
+    part_render = render_mesh(part_v, part_f, color=color)
     alpha_part = 0.3 * root_render + 0.7 * part_render
     out_filename = os.path.join(cur_render_dir, str(data['id'])+'.png')
     misc.imsave(out_filename, alpha_part)
     out_meta_fn = os.path.join(cur_render_dir, str(data['id'])+'.txt')
     with open(out_meta_fn, 'w') as fout:
-        fout.write(u' '.join((str(data['id']), data['name'], data['text'])).encode('utf-8').strip())
-
+        #fout.write(u' '.join((str(data['id']), data['name'], data['text'])).encode('utf-8').strip())
+        fout.write(u' '.join((str(data['id']), data['name'], data['text'])))
     return part_v, part_f
-
-render(tree_hier)
+#print(tree_hier)
+i = 0
+a,b = render(tree_hier)
+print(a.shape)
+print("   ")
+print(b.shape)
